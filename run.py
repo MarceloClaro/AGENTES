@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Tuple
+
 import streamlit as st
 from groq import Groq
 
@@ -10,14 +11,14 @@ FILEPATH = "agents.json"
 USER_FILEPATH = "user_agents.json"
 MODEL_MAX_TOKENS = {
     'mixtral-8x7b-32768': 32768,
-    'llama3-70b-8192': 8192, 
+    'llama3-70b-8192': 8192,
     'llama3-8b-8192': 8192,
     'llama2-70b-4096': 4096,
     'gemma-7b-it': 8192,
 }
 
 def load_agent_options() -> list:
-    agent_options = ['Criar (ou escolher) um especialista...']
+    agent_options = ['Escolher um especialista...']
     if os.path.exists(FILEPATH):
         with open(FILEPATH, 'r') as file:
             try:
@@ -27,15 +28,18 @@ def load_agent_options() -> list:
                 st.error("Erro ao ler o arquivo de agentes. Por favor, verifique o formato.")
     return agent_options
 
-def load_user_agents(filepath: str) -> None:
-    if os.path.exists(filepath):
-        with open(filepath, 'r') as file:
-            try:
-                user_agents = json.load(file)
-                for agent in user_agents:
-                    agent_options.append(agent["agente"])
-            except json.JSONDecodeError:
-                st.error("Erro ao ler o arquivo de agentes do usuário. Por favor, verifique o formato.")
+def load_user_agents(filepath: str):
+    with open(FILEPATH, "r") as file:
+        user_agents = json.load(file)
+    return user_agents
+
+def upload_user_agents_file() -> str:
+    uploaded_file = st.file_uploader("Faça upload do arquivo JSON contendo os agentes do usuário, ele substitui a lista de agentes existente pelos agentes do arquivo:", type=["json"])
+    if uploaded_file is not None:
+        with open(USER_FILEPATH, "wb") as file:
+            file.write(uploaded_file.getvalue())
+        return USER_FILEPATH
+    return ""
 
 def get_max_tokens(model_name: str) -> int:
     return MODEL_MAX_TOKENS.get(model_name, 4096)
@@ -128,15 +132,17 @@ def refine_response(expert_title: str, phase_two_response: str, user_input: str,
         return ""
 
 agent_options = load_agent_options()
-load_user_agents(USER_FILEPATH)
 
-st.title("Agentes Experts II")
+st.title("Agentes Experts")
 st.write("Digite sua solicitação para que ela seja respondida pelo especialista ideal.")
 
 col1, col2 = st.columns(2)
 
 with col1:
     user_input = st.text_area("Por favor, insira sua solicitação:", "", key="entrada_usuario")
+    user_agents_filepath = upload_user_agents_file()
+    if user_agents_filepath:
+        agent_options = load_user_agents(user_agents_filepath)
     agent_selection = st.selectbox("Escolha um Especialista", options=agent_options, index=0, key="selecao_agente")
     model_name = st.selectbox("Escolha um Modelo", list(MODEL_MAX_TOKENS.keys()), index=0, key="nome_modelo")
     temperature = st.slider("Nível de Criatividade", min_value=0.0, max_value=1.0, value=0.0, step=0.01, key="temperatura")
