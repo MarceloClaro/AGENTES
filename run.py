@@ -77,7 +77,7 @@ def fetch_assistant_response(user_input: str, model_name: str, temperature: floa
             )
             return completion.choices[0].message.content
 
-        if agent_selection == "Criar (ou escolher) um especialista...":
+        if agent_selection == "Escolher um especialista...":
             phase_one_prompt = f"Atue como engenheiro de prompt especialista. Analise a seguinte entrada para determinar o título e as características do melhor especialista para responder à pergunta. Comece a resposta com o título do especialista seguido de um ponto ['.'], depois forneça uma descrição concisa desse especialista: {user_input}"
             phase_one_response = get_completion(phase_one_prompt)
             first_period_index = phase_one_response.find(".")
