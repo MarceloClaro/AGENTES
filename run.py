@@ -1,13 +1,13 @@
 import json
-import streamlit as st
 import os
-from typing import Tuple, Optional
+from typing import Tuple
+import streamlit as st
 from groq import Groq
-import toml
 
 st.set_page_config(layout="wide")
 
 FILEPATH = "agents.json"
+USER_FILEPATH = "user_agents.json"
 MODEL_MAX_TOKENS = {
     'mixtral-8x7b-32768': 32768,
     'llama3-70b-8192': 8192, 
@@ -26,6 +26,16 @@ def load_agent_options() -> list:
             except json.JSONDecodeError:
                 st.error("Erro ao ler o arquivo de agentes. Por favor, verifique o formato.")
     return agent_options
+
+def load_user_agents(filepath: str) -> None:
+    if os.path.exists(filepath):
+        with open(filepath, 'r') as file:
+            try:
+                user_agents = json.load(file)
+                for agent in user_agents:
+                    agent_options.append(agent["agente"])
+            except json.JSONDecodeError:
+                st.error("Erro ao ler o arquivo de agentes do usuário. Por favor, verifique o formato.")
 
 def get_max_tokens(model_name: str) -> int:
     return MODEL_MAX_TOKENS.get(model_name, 4096)
@@ -118,6 +128,7 @@ def refine_response(expert_title: str, phase_two_response: str, user_input: str,
         return ""
 
 agent_options = load_agent_options()
+load_user_agents(USER_FILEPATH)
 
 st.title("Agentes Experts")
 st.write("Digite sua solicitação para que ela seja respondida pelo especialista ideal.")
